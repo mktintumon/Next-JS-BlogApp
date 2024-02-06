@@ -14,6 +14,7 @@ const getData = async (slug) => {
   return res.json();
 };
 
+
 const SinglePostPage = async ({ params }) => {
   const { slug } = params;
 
