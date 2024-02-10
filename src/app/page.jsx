@@ -16,11 +16,13 @@ const Home = () => {
           <button className={styles.button}>Contact</button>
         </div>
         <div className={styles.brands}>
-          <Image src="/brands.png" alt="" fill className={styles.brandImg} />
+          <Image src="/brands.png" alt="" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" 
+          className={styles.brandImg} />
         </div>
       </div>
       <div className={styles.imgContainer}>
-        <Image src="/hero.gif" alt="" fill className={styles.heroImg} />
+        <Image src="/hero.gif" alt="" fill 
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className={styles.heroImg} />
       </div>
     </div>
   );

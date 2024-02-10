@@ -13,7 +13,7 @@ export const addPost = async (prevState,formData) => {
   // const desc = formData.get("desc");
   // const slug = formData.get("slug");
 
-  const { title, desc, slug, userId } = Object.fromEntries(formData);
+  const { title, desc, slug, userId , img } = Object.fromEntries(formData);
 
   try {
     connectToDb();
@@ -22,12 +22,14 @@ export const addPost = async (prevState,formData) => {
       desc,
       slug,
       userId,
+      img
     });
 
     await newPost.save();
-    console.log("saved to db");
+    console.log("Post saved to DB");
     revalidatePath("/blog");
     revalidatePath("/admin");
+    return { success: "Blog added successfully!!!" };
   } catch (err) {
     console.log(err);
     return { error: "Something went wrong!" };
@@ -43,7 +45,7 @@ export const deletePost = async (formData) => {
     connectToDb();
 
     await Post.findByIdAndDelete(id);
-    console.log("deleted from db");
+    console.log("Post deleted from DB");
     revalidatePath("/blog");
     revalidatePath("/admin");
   } catch (err) {
@@ -55,19 +57,23 @@ export const deletePost = async (formData) => {
 
 // ADD USER
 export const addUser = async (prevState,formData) => {
-  const { username, email, password, img } = Object.fromEntries(formData);
+  const { username, email, password, img , isAdmin } = Object.fromEntries(formData);
+
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
 
   try {
     connectToDb();
     const newUser = new User({
       username,
       email,
-      password,
+      password : hashedPassword,
       img,
+      isAdmin
     });
 
     await newUser.save();
-    console.log("saved to db");
+    console.log("User saved to DB");
     revalidatePath("/admin");
   } catch (err) {
     console.log(err);
@@ -85,7 +91,7 @@ export const deleteUser = async (formData) => {
 
     await Post.deleteMany({ userId: id });
     await User.findByIdAndDelete(id);
-    console.log("deleted from db");
+    console.log("User and associated posts deleted from DB");
     revalidatePath("/admin");
   } catch (err) {
     console.log(err);

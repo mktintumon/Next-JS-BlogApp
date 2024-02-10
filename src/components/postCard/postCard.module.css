@@ -21,9 +21,7 @@
   }
   
   .date{
-    font-size: 12px;
-    transform: rotate(270deg);
-    margin: auto;
+    font-size: 15px;
   }
   
   .title{
@@ -33,13 +31,21 @@
   }
   
   .desc{
-    width: 90%;
+    width: 85%;
     margin-bottom: 20px;
-    font-weight: 300;
-    color: gray;
+    font-weight: 200;
+    color: rgb(194, 192, 192);
+    text-align: justify;
   }
   
   .link{
     text-decoration: underline;
     margin-bottom: 5rem;
+  }
+
+  .readmoredate{
+    display: flex;
+    flex-direction: row;
+    justify-content:flex-start;
+    gap:10rem
   }
