@@ -3,7 +3,7 @@ import GitHub from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { User } from "./models";
 import bcrypt from "bcryptjs";
-//import { authConfig } from "./auth.config";
+import { authConfig } from "./auth.config";
 import { connectToDb } from "./connectToDb";
 
 const login = async (credentials) => {
@@ -33,11 +33,11 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
-  //...authConfig,
+  ...authConfig,
   providers: [
     GitHub({
-      clientId: process.env.GITHUB_ID,
-      clientSecret: process.env.GITHUB_SECRET,
+      clientId: process.env.AUTH_GITHUB_ID,
+      clientSecret: process.env.AUTH_GITHUB_SECRET,
     }),
     CredentialsProvider({
       async authorize(credentials) {
@@ -73,6 +73,6 @@ export const {
       }
       return true;
     },
-    //...authConfig.callbacks,
+    ...authConfig.callbacks,
   },
 });

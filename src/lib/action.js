@@ -1,120 +1,165 @@
-"use server"
+"use server";
+
 import { revalidatePath } from "next/cache";
-import { connectToDb } from "./connectToDb";
 import { Post, User } from "./models";
 import { signIn, signOut } from "./auth";
-import bcrypt from "bcryptjs"
+import bcrypt from "bcryptjs";
+import { connectToDb } from "./connectToDb";
 
 
+// ADD POST
+export const addPost = async (prevState,formData) => {
+  // const title = formData.get("title");
+  // const desc = formData.get("desc");
+  // const slug = formData.get("slug");
 
-export const addPost = async(formData)=>{
+  const { title, desc, slug, userId } = Object.fromEntries(formData);
 
-    // const title = formData.get('title')
-    // const desc = formData.get('desc')
-    // const slug = formData.get('slug')
-    // const userId = formData.get('userid')
+  try {
+    connectToDb();
+    const newPost = new Post({
+      title,
+      desc,
+      slug,
+      userId,
+    });
 
-    const { title, desc, slug, userId } = Object.fromEntries(formData);
-
-    console.log(title , desc , slug , userId);
-
-    try {
-        connectToDb();
-
-        const newPost = new Post({
-            title,
-            desc,
-            slug,
-            userId
-        })
-
-        await newPost.save();
-        revalidatePath("blog") // will not show cached data , reflects updates
-
-        console.log("New Post saved to DB");
-    } catch (error) {
-        console.log(error);
-    }
-}
+    await newPost.save();
+    console.log("saved to db");
+    revalidatePath("/blog");
+    revalidatePath("/admin");
+  } catch (err) {
+    console.log(err);
+    return { error: "Something went wrong!" };
+  }
+};
 
 
+// DELETE POST
 export const deletePost = async (formData) => {
-    const { id } = Object.fromEntries(formData);
-  
-    try {
-      connectToDb();
-  
-      await Post.findByIdAndDelete(id);
-      console.log("Post deleted from db");
+  const { id } = Object.fromEntries(formData);
 
-      revalidatePath("/blog");
-      //revalidatePath("/admin");
+  try {
+    connectToDb();
 
-    } catch (err) {
-      console.log(err);
-      return { error: "Something went wrong!" };
+    await Post.findByIdAndDelete(id);
+    console.log("deleted from db");
+    revalidatePath("/blog");
+    revalidatePath("/admin");
+  } catch (err) {
+    console.log(err);
+    return { error: "Something went wrong!" };
+  }
+};
+
+
+// ADD USER
+export const addUser = async (prevState,formData) => {
+  const { username, email, password, img } = Object.fromEntries(formData);
+
+  try {
+    connectToDb();
+    const newUser = new User({
+      username,
+      email,
+      password,
+      img,
+    });
+
+    await newUser.save();
+    console.log("saved to db");
+    revalidatePath("/admin");
+  } catch (err) {
+    console.log(err);
+    return { error: "Something went wrong!" };
+  }
+};
+
+
+// DELETE USER AND THEIR POSTS
+export const deleteUser = async (formData) => {
+  const { id } = Object.fromEntries(formData);
+
+  try {
+    connectToDb();
+
+    await Post.deleteMany({ userId: id });
+    await User.findByIdAndDelete(id);
+    console.log("deleted from db");
+    revalidatePath("/admin");
+  } catch (err) {
+    console.log(err);
+    return { error: "Something went wrong!" };
+  }
+};
+
+
+// GITHUB LOGIN
+export const handleGithubLogin = async () => {
+  "use server";
+  await signIn("github");
+};
+
+
+// LOGOUT FUNCTION
+export const handleLogout = async () => {
+  "use server";
+  await signOut();
+};
+
+
+// REGISTER USER
+export const register = async (previousState, formData) => {
+  const { username, email, password, img, passwordRepeat } =
+    Object.fromEntries(formData);
+
+  if (password !== passwordRepeat) {
+    return { error: "Passwords do not match" };
+  }
+
+  try {
+    connectToDb();
+
+    const user = await User.findOne({ username });
+
+    if (user) {
+      return { error: "Username already exists" };
     }
-  };
 
-  export const handleGithubLogin = async() => {
-    "use server"
-    await signIn("github")
-  };
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-  export const handleLogout = async() => {
-    "use server"
-    await signOut()
-  };
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+      img,
+    });
+
+    await newUser.save();
+    console.log("saved to db");
+
+    return { success: true };
+  } catch (err) {
+    console.log(err);
+    return { error: "Something went wrong!" };
+  }
+};
 
 
-  export const register = async (previousState, formData) => {
-    const { username, email, password, img, passwordRepeat } =
-      Object.fromEntries(formData);
-  
-    if (password !== passwordRepeat) {
-      return { error: "Passwords do not match" };
+
+// LOGIN USER
+export const login = async (prevState, formData) => {
+  const { username, password } = Object.fromEntries(formData);
+
+  try {
+    await signIn("credentials", { username, password });
+  } catch (err) {
+    console.log(err);
+
+    if (err.message.includes("CredentialsSignin")) {
+      return { error: "Invalid username or password" };
     }
-  
-    try {
-      connectToDb();
-  
-      const user = await User.findOne({ username });
-  
-      if (user) {
-        return { error: "Username already exists" };
-      }
-  
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-  
-      const newUser = new User({
-        username,
-        email,
-        password: hashedPassword,
-        img,
-      });
-  
-      await newUser.save();
-      console.log("saved to db");
-  
-      return { success: true };
-    } catch (err) {
-      console.log(err);
-      return { error: "Something went wrong!" };
-    }
-  };
-  
-  export const login = async (prevState, formData) => {
-    const { username, password } = Object.fromEntries(formData);
-  
-    try {
-      await signIn("credentials", { username, password });
-    } catch (err) {
-      console.log(err);
-  
-      if (err.message.includes("CredentialsSignin")) {
-        return { error: "Invalid username or password" };
-      }
-      throw err;
-    }
-  };
+    throw err;
+  }
+};
